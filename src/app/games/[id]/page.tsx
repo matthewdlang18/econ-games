@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 
-export default function GamePage({ params }: { params: { id: string } }) {
+export default function GamePage() {
+  const params = useParams();
+  const gameId = params.id as string;
   const [game, setGame] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -12,93 +14,93 @@ export default function GamePage({ params }: { params: { id: string } }) {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  
+
   useEffect(() => {
     const loadGame = async () => {
       try {
         // Get the current user
         const { data: { session } } = await supabase.auth.getSession();
-        
+
         if (!session) {
           router.push('/login');
           return;
         }
-        
+
         setUser(session.user);
-        
+
         // Get the game details
         const { data: gameData, error: gameError } = await supabase
           .from('games')
           .select('*')
-          .eq('id', params.id)
+          .eq('id', gameId)
           .single();
-        
+
         if (gameError || !gameData) {
           throw new Error('Game not found');
         }
-        
+
         setGame(gameData);
-        
+
         // Check if the user has already submitted a response for this round
         const { data: responseData } = await supabase
           .from('game_responses')
           .select('*')
-          .eq('game_id', params.id)
+          .eq('game_id', gameId)
           .eq('user_id', session.user.id)
           .eq('round', gameData.current_round)
           .single();
-        
+
         if (responseData) {
           setResponse(responseData.response);
           setSubmitted(true);
         }
-        
+
         setLoading(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
         setLoading(false);
       }
     };
-    
+
     loadGame();
-  }, [params.id, router]);
-  
+  }, [gameId, router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    
+
     try {
       // Submit the response
       const { error: submitError } = await supabase
         .from('game_responses')
         .insert([{
-          game_id: params.id,
+          game_id: gameId,
           user_id: user.id,
           round: game.current_round,
           response: response
         }]);
-      
+
       if (submitError) {
         throw new Error(`Error submitting response: ${submitError.message}`);
       }
-      
+
       setSubmitted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     }
   };
-  
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setResponse(prev => ({
+    setResponse((prev: any) => ({
       ...prev,
       [name]: value
     }));
   };
-  
+
   const renderGameContent = () => {
     if (!game) return null;
-    
+
     switch (game.type) {
       case 'supply_demand':
         return renderSupplyDemandGame();
@@ -119,7 +121,7 @@ export default function GamePage({ params }: { params: { id: string } }) {
         );
     }
   };
-  
+
   const renderSupplyDemandGame = () => {
     return (
       <div className="bg-white shadow-md rounded-lg p-6">
@@ -127,7 +129,7 @@ export default function GamePage({ params }: { params: { id: string } }) {
         <p className="text-gray-600 mb-6">
           In this market simulation, you will {game.current_round === 1 ? 'set your initial price' : 'adjust your price based on market feedback'}.
         </p>
-        
+
         {submitted ? (
           <div className="bg-green-100 p-4 rounded-md mb-6">
             <h3 className="text-lg font-semibold text-green-800 mb-2">Response Submitted</h3>
@@ -156,7 +158,7 @@ export default function GamePage({ params }: { params: { id: string } }) {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
-            
+
             <button
               type="submit"
               className="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -168,7 +170,7 @@ export default function GamePage({ params }: { params: { id: string } }) {
       </div>
     );
   };
-  
+
   const renderPrisonersDilemmaGame = () => {
     return (
       <div className="bg-white shadow-md rounded-lg p-6">
@@ -176,7 +178,7 @@ export default function GamePage({ params }: { params: { id: string } }) {
         <p className="text-gray-600 mb-6">
           You and another student are in separate rooms and cannot communicate. You both have two choices: cooperate or defect.
         </p>
-        
+
         <div className="mb-6">
           <h3 className="text-lg font-semibold mb-2">Payoff Matrix</h3>
           <div className="border border-gray-300 rounded-md overflow-hidden">
@@ -203,7 +205,7 @@ export default function GamePage({ params }: { params: { id: string } }) {
             </table>
           </div>
         </div>
-        
+
         {submitted ? (
           <div className="bg-green-100 p-4 rounded-md mb-6">
             <h3 className="text-lg font-semibold text-green-800 mb-2">Response Submitted</h3>
@@ -247,7 +249,7 @@ export default function GamePage({ params }: { params: { id: string } }) {
                 </div>
               </div>
             </div>
-            
+
             <button
               type="submit"
               className="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -259,7 +261,7 @@ export default function GamePage({ params }: { params: { id: string } }) {
       </div>
     );
   };
-  
+
   const renderPublicGoodsGame = () => {
     return (
       <div className="bg-white shadow-md rounded-lg p-6">
@@ -267,7 +269,7 @@ export default function GamePage({ params }: { params: { id: string } }) {
         <p className="text-gray-600 mb-6">
           You have $10. You can contribute any amount to a public pool. The total amount in the pool will be multiplied by 1.5 and divided equally among all players, regardless of their contribution.
         </p>
-        
+
         {submitted ? (
           <div className="bg-green-100 p-4 rounded-md mb-6">
             <h3 className="text-lg font-semibold text-green-800 mb-2">Response Submitted</h3>
@@ -297,7 +299,7 @@ export default function GamePage({ params }: { params: { id: string } }) {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
-            
+
             <button
               type="submit"
               className="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -309,7 +311,7 @@ export default function GamePage({ params }: { params: { id: string } }) {
       </div>
     );
   };
-  
+
   const renderAuctionGame = () => {
     return (
       <div className="bg-white shadow-md rounded-lg p-6">
@@ -317,7 +319,7 @@ export default function GamePage({ params }: { params: { id: string } }) {
         <p className="text-gray-600 mb-6">
           You are bidding on an item with a value to you of $100. The highest bidder wins the item and pays their bid amount.
         </p>
-        
+
         {submitted ? (
           <div className="bg-green-100 p-4 rounded-md mb-6">
             <h3 className="text-lg font-semibold text-green-800 mb-2">Response Submitted</h3>
@@ -346,7 +348,7 @@ export default function GamePage({ params }: { params: { id: string } }) {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
-            
+
             <button
               type="submit"
               className="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -358,7 +360,7 @@ export default function GamePage({ params }: { params: { id: string } }) {
       </div>
     );
   };
-  
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -366,7 +368,7 @@ export default function GamePage({ params }: { params: { id: string } }) {
       </div>
     );
   }
-  
+
   if (error) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -383,7 +385,7 @@ export default function GamePage({ params }: { params: { id: string } }) {
       </div>
     );
   }
-  
+
   return (
     <div className="min-h-screen p-8">
       <div className="max-w-4xl mx-auto">
@@ -403,7 +405,7 @@ export default function GamePage({ params }: { params: { id: string } }) {
             Back to Games
           </button>
         </div>
-        
+
         {renderGameContent()}
       </div>
     </div>
