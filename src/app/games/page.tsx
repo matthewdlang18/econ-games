@@ -91,7 +91,7 @@ export default function GamesPage() {
       }
 
       // Navigate to the game page
-      router.push(`/games/${gameId}`);
+      router.push(`/game?id=${gameId}`);
     } catch (error) {
       console.error('Error joining game:', error);
     }
@@ -167,7 +167,7 @@ export default function GamesPage() {
                         {getGameDescription(game.type)}
                       </p>
                       <button
-                        onClick={() => router.push(`/games/${game.id}`)}
+                        onClick={() => router.push(`/game?id=${game.id}`)}
                         className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 w-full"
                       >
                         Continue Game
