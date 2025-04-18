@@ -1,12 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable static exports for GitHub Pages
-  output: 'export',
+  // We'll use server-side rendering for authentication
   // Set the base path for GitHub Pages
   basePath: process.env.NODE_ENV === 'production' ? '/econ-games' : '',
-  // Configure images for static export
+  // Configure images
   images: {
-    unoptimized: true,
+    domains: ['supabase.com'],
   },
   // Disable ESLint during build
   eslint: {
@@ -15,12 +14,6 @@ const nextConfig = {
   // Disable TypeScript type checking during build
   typescript: {
     ignoreBuildErrors: true,
-  },
-  // Disable dynamic routes for static export
-  experimental: {
-    // This will disable dynamic routes for static export
-    // We'll handle routing client-side
-    disableStaticImages: true,
   },
 };
 
