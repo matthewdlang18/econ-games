@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, useParams } from 'next/navigation';
+import { redirectIfNotAuthenticated } from '@/lib/auth-utils';
 
 export default function GamePage() {
   const params = useParams();
@@ -18,15 +19,12 @@ export default function GamePage() {
   useEffect(() => {
     const loadGame = async () => {
       try {
+        const isAuthenticated = await redirectIfNotAuthenticated(router);
+        if (!isAuthenticated) return;
+
         // Get the current user
         const { data: { session } } = await supabase.auth.getSession();
-
-        if (!session) {
-          router.push('/login');
-          return;
-        }
-
-        setUser(session.user);
+        setUser(session!.user);
 
         // Get the game details
         const { data: gameData, error: gameError } = await supabase

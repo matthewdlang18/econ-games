@@ -1,8 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // We'll use server-side rendering for authentication
+  // Enable static exports for GitHub Pages
+  output: 'export',
+  // Set the base path for GitHub Pages
+  basePath: '/econ-games',
+  // Configure images for static export
   images: {
-    domains: ['supabase.com'],
+    unoptimized: true,
   },
   // Disable ESLint during build
   eslint: {
